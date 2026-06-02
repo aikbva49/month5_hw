@@ -18,8 +18,15 @@ class Product(models.Model):
 
 
 class Review(models.Model):
-    text = models.TextField(verbose_name="Текст отзыва")
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews', verbose_name="Товар")
+    text = models.TextField(verbose_name="Текст отзыва")
+    # Оставляем ОДИН класс Review со списком выбора от 1 до 5
+    stars = models.IntegerField(
+        choices=[(i, i) for i in range(1, 6)], 
+        null=True, 
+        default=1, 
+        verbose_name="Оценка"
+    )
 
     def __str__(self):
-        return f"Отзыв для {self.product.title}"
+        return f"Отзыв ({self.stars}★) для {self.product.title}"
