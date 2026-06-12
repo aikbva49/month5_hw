@@ -28,11 +28,7 @@ def registration_api_view(request):
     
     return Response(
         status=status.HTTP_201_CREATED,
-        data={
-            'user_id': user.id,
-            'code': generated_code,
-            'message': 'Пользователь успешно зарегистрирован! Используйте полученный код для подтверждения.'
-        }
+        data={'user_id': user.id, 'code': generated_code}
     )
 
 @api_view(['POST'])
@@ -45,11 +41,7 @@ def authorization_api_view(request):
     if user:
         token, _ = Token.objects.get_or_create(user=user)
         return Response(data={'key': token.key})
-    
-    return Response(
-        status=status.HTTP_401_UNAUTHORIZED,
-        data={'error': 'Неверные учетные данные или аккаунт еще не активирован через SMS-код!'}
-    )
+    return Response(status=status.HTTP_401_UNAUTHORIZED, data={'error': 'Неверные данные или аккаунт не активирован'})
 
 @api_view(['POST'])
 def confirm_api_view(request):
@@ -63,23 +55,12 @@ def confirm_api_view(request):
         user = User.objects.get(username=username)
         user_code_obj = UserSMSCode.objects.get(user=user)
     except (User.DoesNotExist, UserSMSCode.DoesNotExist):
-        return Response(
-            status=status.HTTP_404_NOT_FOUND, 
-            data={'error': 'Пользователь или код активации не найдены!'}
-        )
+        return Response(status=status.HTTP_404_NOT_FOUND, data={'error': 'Код или пользователь не найден'})
     
     if user_code_obj.code == received_code:
         user.is_active = True  
         user.save()
-        
-        user_code_obj.delete()
-        
-        return Response(
-            status=status.HTTP_200_OK,
-            data={'message': 'Аккаунт успешно активирован! Теперь вы можете авторизоваться.'}
-        )
+        user_code_obj.delete()  
+        return Response(status=status.HTTP_200_OK, data={'message': 'Успешно подтверждено!'})
     
-    return Response(
-        status=status.HTTP_400_BAD_REQUEST,
-        data={'error': 'Введен неверный код подтверждения!'}
-    )
+    return Response(status=status.HTTP_400_BAD_REQUEST, data={'error': 'Неверный код'})

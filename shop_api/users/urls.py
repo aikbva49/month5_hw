@@ -6,3 +6,4 @@ urlpatterns = [
     path('authorization/', views.authorization_api_view),
     path('confirm/', views.confirm_api_view), 
 ]
+
